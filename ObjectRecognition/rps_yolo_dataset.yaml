@@ -1,0 +1,12 @@
+
+# Rock-Paper-Scissors YOLO Dataset Configuration
+path: ./archive (1)/RPS_YOLO_Annotated  # dataset root dir
+train: images/train  # train images (relative to 'path')
+val: images/val  # val images (relative to 'path')
+test: images/test  # test images (relative to 'path')
+
+# Classes
+names:
+  0: Rock
+  1: Paper
+  2: Scissor
