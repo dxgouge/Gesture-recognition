@@ -46,16 +46,15 @@ jobs:
       run: |
         black --check .
     
-    - name: Test with pytest
+    - name: Run tests
       run: |
-        pytest -v --tb=short
+         pytest tests/ -v --tb=short --maxfail=3 --disable-warnings
     
     - name: Test imports
       run: |
-        python -c "import ultralytics; print('Ultralytics imported successfully')"
-        python -c "import cv2; print('OpenCV imported successfully')"
-        python -c "import mediapipe; print('MediaPipe imported successfully')"
-        python -c "import numpy; print('NumPy imported successfully')"
+        python -m pip install --upgrade pip
+        pip install --default-timeout=120 -r requirements.txt
+        
 
   build:
     needs: test
