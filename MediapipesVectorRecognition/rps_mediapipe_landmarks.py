@@ -52,9 +52,10 @@ def process_result(result: HandLandmarkerResult, output_image: mp.Image, timesta
         if result.hand_landmarks:
             for hand_landmarks in result.hand_landmarks:
                 try:
+
                     x_coords = [landmark.x for landmark in hand_landmarks]
                     y_coords = [landmark.y for landmark in hand_landmarks]
-
+                    
                     def get_landmark_distance(landmark1, landmark2):
                         """Calculate distance between two landmarks."""
                         return np.sqrt(
@@ -91,12 +92,16 @@ def process_result(result: HandLandmarkerResult, output_image: mp.Image, timesta
                     static_coords = [x_coords[9], y_coords[9]]
                     base_coords1 = [x_coords[0], y_coords[0]]
 
-                    # Calculate direction vectors
-                    dirV_index = get_finger_vector(8, 7)
-                    dirV_middle = get_finger_vector(12, 11)
-                    dirV_ring = get_finger_vector(16, 15)
-                    dirV_pinky = get_finger_vector(20, 19)
+                    # Calculate direction vectors based on landmarks. From lower joint to middle joint.
+                    dirV_index = get_finger_vector(7, 6)
+                    dirV_middle = get_finger_vector(11, 10)
+                    dirV_ring = get_finger_vector(15, 14)
+                    dirV_pinky = get_finger_vector(19, 18)
                     dirV_baseline1 = get_finger_vector(1, 0)
+                    
+                    dirV_middle_base = get_finger_vector(10, 9)
+                    dirV_ring_base = get_finger_vector(14, 13)
+         
 
                     # Calculate angles
                     angle_index = get_finger_angle(dirV_index)
@@ -106,9 +111,10 @@ def process_result(result: HandLandmarkerResult, output_image: mp.Image, timesta
                     angle_baseline1 = get_finger_angle(dirV_baseline1)
                     
                     angle_middle_to_ring = get_angle_between_fingers(dirV_middle, dirV_ring)
+                    angle_base_middle_to_ring = get_angle_between_fingers(dirV_middle_base, dirV_ring_base)
                     angle_middle_to_baseline1 = get_angle_between_fingers(dirV_middle, dirV_baseline1)
 
-                    # Scale the vectors to hand size
+                    # Scale the vectors to hand size for vector smoothing
                     palm_size = get_landmark_distance(9, 0)  # 0.14
                     scale = 0.14 / palm_size
                     
@@ -124,15 +130,22 @@ def process_result(result: HandLandmarkerResult, output_image: mp.Image, timesta
                     dirV_pinky *= scale
                     dirV_baseline1 *= scale
                     
-                    closed_finger_distance = 0.2
                     
                     # Vector-based gesture recognition
-                    if angle_middle_to_ring > 90:
+                    
+                    #checks if hand is pointing up or down then checks if the ring and middle finger are pointing in opposite directions
+                    if (base_coords1[1] > static_coords[1] and dirV_middle_base[1] < 0 and dirV_ring_base[1] < 0):
+                        gesture_type = "rock"
+                    elif (base_coords1[1] < static_coords[1] and dirV_middle_base[1] > 0 and dirV_ring_base[1] > 0):
+                        gesture_type = "rock"
+                    elif (base_coords1[1] > static_coords[1] and dirV_middle[1] < 0 and dirV_ring[1] < 0):
+                        gesture_type = "rock"
+                    elif (base_coords1[1] < static_coords[1] and dirV_middle[1] > 0 and dirV_ring[1] > 0):
+                        gesture_type = "rock"
+                    #checks if the middle and ring finger are pointing in opposite directions
+                    elif angle_middle_to_ring > 90:
                         gesture_type = "scissors"
-                    elif (base_coords1[1] > static_coords[1] and dirV_middle[1] < 0):
-                        gesture_type = "rock"
-                    elif (base_coords1[1] < static_coords[1] and dirV_middle[1] > 0):
-                        gesture_type = "rock"
+                    #checks if the middle and ring finger are pointing in the same direction
                     elif (angle_middle - angle_ring < 90 and angle_middle - angle_ring > -90):
                         gesture_type = "paper"
                     else:
@@ -174,8 +187,11 @@ def process_result(result: HandLandmarkerResult, output_image: mp.Image, timesta
                     
                     # Draw landmarks
                     for landmark in hand_landmarks:
+                        index = hand_landmarks.index(landmark)
+
                         landmark_x = int(landmark.x * annotated_image.shape[1])
                         landmark_y = int(landmark.y * annotated_image.shape[0])
+                           
                         cv2.circle(annotated_image, (landmark_x, landmark_y), 3, (255, 255, 255), 2)
                 except Exception as e:
                     print(f"Error drawing hand bounding box: {e}")
@@ -198,7 +214,7 @@ def process_result(result: HandLandmarkerResult, output_image: mp.Image, timesta
 options = HandLandmarkerOptions(
     base_options=BaseOptions(
         model_asset_path=os.path.join(os.path.dirname(__file__), 'hand_landmarker.task')  # This will auto-download
-        # No delegate specified = uses CPU by default
+        # No delegate specified = uses CPU by default, GPU delegation not compatible with windows
     ),
     running_mode=VisionRunningMode.LIVE_STREAM,
     result_callback=process_result,
