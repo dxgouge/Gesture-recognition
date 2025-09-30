@@ -82,25 +82,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned Features
 - [ ] Support for additional gesture types (thumbs up, peace sign, etc.)
-- [ ] Mobile app integration
-- [ ] Real-time multiplayer game mode
-- [ ] Improved accuracy with ensemble methods
-- [ ] Web-based interface
-- [ ] Custom gesture training interface
-- [ ] Model quantization for mobile deployment
+- [ ] Improved accuracy with ML integrated landmarks.
 - [ ] Multi-hand detection support
 - [ ] Gesture sequence recognition
 - [ ] Performance optimization for edge devices
 
 ### Potential Improvements
 - [ ] Better handling of lighting variations
-- [ ] Improved accuracy for side-view gestures
+- [ ] Light smoothing fro improved accuracy
 - [ ] Real-time model fine-tuning
 - [ ] Gesture confidence scoring
 - [ ] Multi-language support
 - [ ] Accessibility features
 - [ ] Cloud deployment options
-- [ ] API endpoints for integration
+
 
 ---
 

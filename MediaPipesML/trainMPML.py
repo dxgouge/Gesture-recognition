@@ -6,64 +6,14 @@ import os
 
 import os
 from pynput import keyboard
-from mediapipe_model_maker import gesture_recognizer
+import pandas as pd
+import mediapipe as mp
 
 import matplotlib.pyplot as plt
-# Import MediaPipe Tasks API components
-dataset_path = "hagrid-sample-30k-384p/hagrid_30k"
-annotation_path = "hagrid-sample-30k-384p/ann_train_val"
+
+csv_file = "C:/Users/dxg45/yolofn/MPMLDATA/rps_mediapipe_landmarks_ML_data.csv"
+columns = ["landmark_0_x", "landmark_0_y", "landmark_1_x", "landmark_1_y", "landmark_2_x", "landmark_2_y", "landmark_3_x", "landmark_3_y", "landmark_4_x", "landmark_4_y", "landmark_5_x", "landmark_5_y", "landmark_6_x", "landmark_6_y", "landmark_7_x", "landmark_7_y", "landmark_8_x", "landmark_8_y", "landmark_9_x", "landmark_9_y", "landmark_10_x", "landmark_10_y", "landmark_11_x", "landmark_11_y", "landmark_12_x", "landmark_12_y", "landmark_13_x", "landmark_13_y", "landmark_14_x", "landmark_14_y", "landmark_15_x", "landmark_15_y", "landmark_16_x", "landmark_16_y", "landmark_17_x", "landmark_17_y", "landmark_18_x", "landmark_18_y", "landmark_19_x", "landmark_19_y", "landmark_20_x", "landmark_20_y"]
+df = pd.DataFrame(columns)
+df = df.to_csv(csv_file, index=False)
 
 
-# Global variables to store the latest result
-latest_result = None
-latest_annotated_image = None
-running = True
-listener = None
-print(dataset_path)
-labels = []
-for i in os.listdir(dataset_path):
-  if os.path.isdir(os.path.join(dataset_path, i)):
-    labels.append(i)
-print(labels)
-NUM_EXAMPLES = 5
-
-# for label in labels:
-#   label_dir = os.path.join(dataset_path, label)
-#   example_filenames = os.listdir(label_dir)[:NUM_EXAMPLES]
-#   fig, axs = plt.subplots(1, NUM_EXAMPLES, figsize=(10,2))
-#   for i in range(NUM_EXAMPLES):
-#     axs[i].imshow(plt.imread(os.path.join(label_dir, example_filenames[i])))
-#     axs[i].get_xaxis().set_visible(False)
-#     axs[i].get_yaxis().set_visible(False)
-#   fig.suptitle(f'Showing {NUM_EXAMPLES} examples for {label}')
-
-# plt.show()
-
-
-
-data = gesture_recognizer.Dataset.from_folder(
-    dirname=dataset_path,
-    hparams=gesture_recognizer.HandDataPreprocessingParams()
-)
-train_data, rest_data = data.split(0.8)
-validation_data, test_data = rest_data.split(0.5)
-hparams = gesture_recognizer.HParams(export_dir="exported_model")
-options = gesture_recognizer.GestureRecognizerOptions(hparams=hparams)
-model = gesture_recognizer.GestureRecognizer.create(
-    train_data=train_data,
-    validation_data=validation_data,
-    options=options
-)
-model.export_model()
-
-# hparams = gesture_recognizer.HParams(learning_rate=0.003, export_dir="exported_model_2")
-# model_options = gesture_recognizer.ModelOptions(dropout_rate=0.2)
-# options = gesture_recognizer.GestureRecognizerOptions(model_options=model_options, hparams=hparams)
-# model_2 = gesture_recognizer.GestureRecognizer.create(
-#     train_data=train_data,
-#     validation_data=validation_data,
-#     options=options
-# )
-
-# loss, accuracy = model_2.evaluate(test_data)
-# print(f"Test loss:{loss}, Test accuracy:{accuracy}")

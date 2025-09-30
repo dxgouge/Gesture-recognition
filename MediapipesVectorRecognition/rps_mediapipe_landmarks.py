@@ -218,10 +218,10 @@ options = HandLandmarkerOptions(
     ),
     running_mode=VisionRunningMode.LIVE_STREAM,
     result_callback=process_result,
-    num_hands=2,  # Detect up to 2 hands
-    min_hand_detection_confidence=0.2,
-    min_hand_presence_confidence=0.2,
-    min_tracking_confidence=0.2
+    num_hands=1,  # Detect up to 2 hands
+    min_hand_detection_confidence=0.3,
+    min_hand_presence_confidence=0.3,
+    min_tracking_confidence=0.3
 )
 
 # Initialize webcam
