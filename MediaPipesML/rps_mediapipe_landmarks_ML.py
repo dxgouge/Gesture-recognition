@@ -43,11 +43,11 @@ class HandGestureRecognizer:
         self.frame_height = frame_height
         
         # State variables
-        self.latest_result: Optional[HandLandmarkerResult] = None
+        self.latest_result: Optional[Any] = None
         self.latest_annotated_image: Optional[np.ndarray] = None
         self.running = True
         self.listener: Optional[keyboard.Listener] = None
-        self.landmarker: Optional[HandLandmarker] = None
+        self.landmarker: Optional[Any] = None
         self.cap: Optional[cv2.VideoCapture] = None
         
         # Data storage for the latest processed frame
@@ -160,7 +160,7 @@ class HandGestureRecognizer:
         }
     def is_hand_detected(self):
         return self.hand_detected
-    def _process_result(self, result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+    def _process_result(self, result, output_image: mp.Image, timestamp_ms: int):
         """
         Callback function that processes hand landmark detection results.
         This runs in a separate thread for real-time processing.

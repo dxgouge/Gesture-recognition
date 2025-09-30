@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Example showing how to use the HandGestureRecognizer class to collect data
-and save it to a CSV file in a separate logging module.
-"""
 
 import csv
 import re

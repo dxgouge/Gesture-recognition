@@ -33,7 +33,7 @@ def start_global_listener():
     listener.start()
 
 
-def process_result(result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+def process_result(result, output_image, timestamp_ms):
     """
     Callback function that processes hand landmark detection results.
     This runs in a separate thread for real-time processing.
