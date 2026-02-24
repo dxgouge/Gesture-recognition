@@ -4,7 +4,7 @@ import numpy as np
 import time
 import os
 from pynput import keyboard
-
+import serial.tools.list_ports
 # Import MediaPipe Tasks API components
 BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
@@ -173,6 +173,8 @@ def process_result(result, output_image, timestamp_ms):
 
                     # Display gesture type on image
                     if gesture_type != "unknown":
+                        
+                        serialInst.write(gesture_type.encode("utf-8")) 
                         text_x = int(min(x_coords) * annotated_image.shape[1])
                         text_y = int(min(y_coords) * annotated_image.shape[0]) - 10
                         cv2.putText(
@@ -225,12 +227,50 @@ options = HandLandmarkerOptions(
 )
 
 # Initialize webcam
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+def setUp():
+    
+    
+    ports = serial.tools.list_ports.comports()
+    serialInst = serial.Serial()
+    portsList = []
+    for port in ports:
+        portsList.append(str(port))
+        print(str(port))
+    if len(portsList) > 0:
+        
+        serialInst.baudrate = 9600
+        
+        
+        try:
+            
+            for i, port in enumerate(portsList):
+                if port.startswith("COM7"):
+                    serialInst.port = "COM7"
+                    break
+           
+             
+            print(f"Attempting to connect to serial port: {serialInst.port}")
+            serialInst.open()
+            print("Serial port opened successfully.")
+            serialInst.write("Started".encode("utf-8")) 
+            print(f"Connected to serial port: {serialInst.port}")
+        except Exception as e:
+            print(f"Failed to connect to serial port: {e}")
+    if(input("Press Enter to start") == ""):
+        
+        print("Continuing")
+    else:
+        serialInst.close()
+        exit(0)
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-print("MediaPipe Tasks Hand Landmarks Started!")
-print("Press 'q' to quit")
+    print("MediaPipe Tasks Hand Landmarks Started!")
+    print("Press 'q' to quit")
+    return cap, serialInst
+
+cap, serialInst = setUp()
 
 # Create the hand landmarker
 with HandLandmarker.create_from_options(options) as landmarker:
@@ -270,10 +310,12 @@ with HandLandmarker.create_from_options(options) as landmarker:
                 print(f"Detected {len(latest_result.hand_landmarks)} hand(s)", end="\r", flush=True)
             else:
                 print("No hands detected")
+                
         
         # Check for quit key
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q') or key == 27:  # 'q' or ESC
+            serialInst.close()
             break
 
 cap.release()
