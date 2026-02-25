@@ -103,9 +103,9 @@ class HandGestureRecognizer:
             terminal_coords[1] - initial_coords[1]
         ])
     
-    def _get_finger_angle(self, vector: np.ndarray) -> float:
-        """Calculate angle of a vector in degrees."""
-        return np.degrees(np.arctan2(vector[1], vector[0]))
+    def _get_finger_angle(self, vector: np.ndarray, reference_vector: np.ndarray) -> float:
+        """Calculate angle of a vector relative to a reference vector in degrees."""
+        return self._get_angle_between_fingers(vector, reference_vector)
     
     def _get_angle_between_fingers(self, vector1: np.ndarray, vector2: np.ndarray) -> float:
         """Calculate angle between two vectors in degrees."""
@@ -203,11 +203,11 @@ class HandGestureRecognizer:
                         
                         # Calculate angles
                         angles = {
-                            'angle_index': self._get_finger_angle(vectors['dirV_index']),
-                            'angle_middle': self._get_finger_angle(vectors['dirV_middle']),
-                            'angle_ring': self._get_finger_angle(vectors['dirV_ring']),
-                            'angle_pinky': self._get_finger_angle(vectors['dirV_pinky']),
-                            'angle_baseline1': self._get_finger_angle(vectors['dirV_baseline1']),
+                            'angle_index': self._get_finger_angle(vectors['dirV_index'], vectors['dirV_baseline1']),
+                            'angle_middle': self._get_finger_angle(vectors['dirV_middle'], vectors['dirV_baseline1']),
+                            'angle_ring': self._get_finger_angle(vectors['dirV_ring'], vectors['dirV_baseline1']),
+                            'angle_pinky': self._get_finger_angle(vectors['dirV_pinky'], vectors['dirV_baseline1']),
+                            'angle_baseline1': self._get_finger_angle(vectors['dirV_baseline1'], np.array([0, 0])),
                             'angle_middle_to_ring': self._get_angle_between_fingers(vectors['dirV_middle'], vectors['dirV_ring']),
                             'angle_base_middle_to_ring': self._get_angle_between_fingers(vectors['dirV_middle_base'], vectors['dirV_ring_base']),
                             'angle_middle_to_baseline1': self._get_angle_between_fingers(vectors['dirV_middle'], vectors['dirV_baseline1'])
@@ -215,7 +215,9 @@ class HandGestureRecognizer:
                         
                         # Scale the vectors to hand size for vector smoothing
                         palm_size = self._get_landmark_distance(9, 0, x_coords, y_coords)
-                        scale = 0.14 / palm_size if palm_size > 0 else 1.0
+                        if palm_size == 0:
+                            continue
+                        scale = 0.14 / palm_size
                         landmark_coords = np.array([[landmark.x, landmark.y] for landmark in hand_landmarks])
 
                        
@@ -225,9 +227,8 @@ class HandGestureRecognizer:
                         # Apply scaling
                         for key in distances:
                             distances[key] *= scale
-                        for key in vectors:
-                            vectors[key] *= scale
-                        angles['angle_middle_to_ring'] *= scale
+                        
+                        
                         
                         # Recognize gesture
                         gesture_type = self._recognize_gesture(

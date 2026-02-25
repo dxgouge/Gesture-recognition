@@ -8,7 +8,7 @@ import time
 from rps_mediapipe_landmarks_ML import HandGestureRecognizer
 import pandas as pd
 
-headers =         ['timestamp', 'gesture_type', 'palm_size', 'scale_factor',
+headers =         ['timestamp', 'gesture_type',
         # Landmark coordinates (21 landmarks × 2 coordinates = 42 columns)
         *[f'landmark_{i}_x' for i in range(21)],
         *[f'landmark_{i}_y' for i in range(21)],
@@ -48,7 +48,7 @@ def log_data_to_csv(filename: str, data: dict, gesture_type: str):
     
     # Prepare data row
     row_data = [
-        data['timestamp'], gesture_type, data['palm_size'], data['scale_factor'],
+        data['timestamp'], gesture_type,
         # Landmark coordinates
         *data['x_coords'], *data['y_coords'],
         # Angles
@@ -167,7 +167,7 @@ def collect_gesture_data(duration_seconds: int = 10, output_file: str = "collect
 
 if __name__ == "__main__":
 
-    outputRoot = "custom_gesture_data"
+    outputRoot = "data/custom_gesture_data"
     gesture_type = input("Enter the gesture type, r,p,s (0,1,2): ")
     gesture_type = int(re.search(r'\d+', gesture_type).group())
     if isinstance(gesture_type, int):
@@ -191,4 +191,4 @@ if __name__ == "__main__":
     outputFile = f"{outputRoot}_{outputGesture}.csv"
     
     # Collect data for 30 seconds
-    collect_gesture_data(duration_seconds=10, output_file=outputFile)
+    collect_gesture_data(duration_seconds=60, output_file=outputFile)
