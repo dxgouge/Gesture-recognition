@@ -16,6 +16,7 @@ Install dependencies:
 """
 
 import os
+from pyexpat import model
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
@@ -88,6 +89,7 @@ def load_gesture_csvs(data_dir: str, file_map: dict) -> dict[int, pd.DataFrame]:
         
         
         df = df.drop(columns=[c for c in df.columns if c.startswith("landmark")], errors="ignore")
+        df = df.drop(columns=[c for c in df.columns if c.startswith("dirV_baseline")], errors="ignore")
 
         print(f"  Class {label}: {filename:45s}  {len(df):>7,} rows")
         dfs[label] = df
@@ -246,6 +248,9 @@ def evaluate(model, X_test, y_test, base_feature_names: list):
 def save_model(model, path: str):
     joblib.dump(model, path)
     print(f"\nModel saved to: {path}")
+    # Add this to the bottom of your training script after saving the pkl
+    model.booster_.save_model("rps_lgbm_model.txt")
+   
 
 
 # =============================================================================
@@ -296,6 +301,7 @@ if __name__ == "__main__":
     # 1. Load
     dfs = load_gesture_csvs(DATA_DIR, FILE_MAP)
 
+
     # 2. Build windowed train/test sets
     X_train, X_test, y_train, y_test = build_train_test_sets(
         dfs, DROP_COLUMNS, WINDOW_SIZE, TEST_SIZE
@@ -312,7 +318,8 @@ if __name__ == "__main__":
     # 4. Evaluate
     base_feature_names = [c for c in list(dfs.values())[0].columns if c not in DROP_COLUMNS]
     evaluate(model, X_test, y_test, base_feature_names)
-
+    model = joblib.load("rps_lgbm_model.pkl")
+    print(model.booster_.feature_name())
     # 5. Save
     save_model(model, MODEL_OUT)
 

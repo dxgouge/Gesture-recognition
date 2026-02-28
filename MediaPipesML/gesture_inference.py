@@ -94,7 +94,7 @@ def extract_feature_vector(data: dict) -> np.ndarray:
         data['vectors']['dirV_middle'][0],   data['vectors']['dirV_middle'][1],
         data['vectors']['dirV_ring'][0],     data['vectors']['dirV_ring'][1],
         data['vectors']['dirV_pinky'][0],    data['vectors']['dirV_pinky'][1],
-        data['vectors']['dirV_baseline1'][0],data['vectors']['dirV_baseline1'][1],
+        data['vectors']['dirV_baseline1'][1],  # data['vectors']['dirV_baseline1'][0],
         data['vectors']['dirV_middle_base'][0], data['vectors']['dirV_middle_base'][1],
         data['vectors']['dirV_ring_base'][0],   data['vectors']['dirV_ring_base'][1],
     ]
