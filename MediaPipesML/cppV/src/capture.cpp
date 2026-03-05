@@ -51,11 +51,65 @@ void drawOverlay(
 
     // Draw Landmarks (for debugging) — only if we have valid landmarks to avoid out-of-bounds access
     if (landmarks.x_coords.size() > 0 && landmarks.y_coords.size() > 0 && !palms.empty()) {
-        std::cout << "Drawing landmarks\n: landmarks.x_coords[0]: " << -1 * landmarks.x_coords[0] * FRAME_WIDTH << "\n"
-                     "landmarks.y_coords[0]: " << -1 * landmarks.y_coords[0] * FRAME_HEIGHT  << "\n"
-                     "FRAME: " << FRAME_WIDTH << "x" << FRAME_HEIGHT << "\n";
+    
+        // std::cout << "Drawing landmarks\n: landmarks.x_coords[0]: " << 1 * landmarks.x_coords[0] * FRAME_WIDTH << "\n"
+        //              "landmarks.y_coords[0]: " << 1 * landmarks.y_coords[0] * FRAME_HEIGHT  << "\n"
+        //              "FRAME: " << FRAME_WIDTH << "x" << FRAME_HEIGHT << "\n";
+
+        for (size_t i = 0; i < landmarks.x_coords.size(); ++i) {
+            int x = static_cast<int>((1 * landmarks.x_coords[i]) * FRAME_WIDTH);
+            int y = static_cast<int>(1 * landmarks.y_coords[i] * FRAME_HEIGHT);
+            cv::circle(frame, cv::Point(x, y), 5, cv::Scalar(0, 255, 255), 2);
+        }
         cv::circle(frame, cv::Point( -1 * landmarks.x_coords[0] * FRAME_WIDTH, -1 * landmarks.y_coords[0] * FRAME_HEIGHT), 5, cv::Scalar(0, 255, 255), 2);
     }
+    // Draw palm bounding boxes
+for (const auto& palm : palms) {
+    // Center and size in pixel coords
+    int cx = static_cast<int>(palm.cx * FRAME_WIDTH);
+    int cy = static_cast<int>(palm.cy * FRAME_HEIGHT);
+    int w  = static_cast<int>(palm.width  * FRAME_WIDTH);
+    int h  = static_cast<int>(palm.height * FRAME_HEIGHT);
+
+    // Simple axis-aligned box (ignores rotation, just for sanity check)
+    cv::rectangle(frame,
+        cv::Point(cx - w/2, cy - h/2),
+        cv::Point(cx + w/2, cy + h/2),
+        cv::Scalar(0, 165, 255), 2);
+
+    // Draw the rotated crop rectangle to see exactly what the landmarker gets
+    float cos_r = std::cos(palm.rotation);
+    float sin_r = std::sin(palm.rotation);
+    float half  = std::max(palm.width * FRAME_WIDTH, palm.height * FRAME_HEIGHT) * 2.6f * 0.5f;
+
+    // Apply shift_y in rotated frame
+    float shift_y = -0.5f * half * 1.0f;
+    float rcx = cx + (-sin_r * shift_y);
+    float rcy = cy + ( cos_r * shift_y);
+
+    // Four corners of the rotated square crop
+    cv::Point2f corners[4];
+    float dirs[4][2] = {{-1,-1},{1,-1},{1,1},{-1,1}};
+    for (int i = 0; i < 4; ++i) {
+        float lx = dirs[i][0] * half;
+        float ly = dirs[i][1] * half;
+        corners[i] = cv::Point2f(
+            rcx + cos_r * lx - sin_r * ly,
+            rcy + sin_r * lx + cos_r * ly
+        );
+    }
+
+    // Draw the rotated box
+    for (int i = 0; i < 4; ++i)
+        cv::line(frame, corners[i], corners[(i+1)%4], cv::Scalar(0, 255, 0), 2);
+
+    // Draw center point
+    cv::circle(frame, cv::Point(static_cast<int>(rcx), static_cast<int>(rcy)), 5,
+               cv::Scalar(0, 255, 0), -1);
+}
+    cv::circle(frame, cv::Point( 100, 0), 5, cv::Scalar(0, 255, 255), 2);
+    cv::circle(frame, cv::Point( 0, 100), 5, cv::Scalar(255, 0, 255), 2);
+
     cv::putText(frame, buf_str,
                 cv::Point(10, 72),
                 cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(160, 160, 160), 1);
@@ -129,6 +183,11 @@ void runLoop(
 
                         try {
                             Inference::PredictionResult result = classifier.predict(window);
+                            // Print one window's worth of features
+                            //std::cout << "Feature vector (" << window.size() << " values):\n";
+                            for (size_t i = 0; i < std::min(window.size(), (size_t)25); ++i)
+                                //std::cout << "  [" << i << "] = " << window[i] << "\n";
+                           // std::cout << std::endl;
                             current_gesture    = result.gesture_name;
                             current_confidence = result.confidence;
                         } catch (const std::exception& e) {

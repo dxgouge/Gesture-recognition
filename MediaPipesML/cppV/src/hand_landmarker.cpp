@@ -1,6 +1,7 @@
 #include "hand_landmarker.h"
 #include <stdexcept>
 #include <cmath>
+#include "tensorflow/lite/delegates/gpu/metal_delegate.h"
 
 namespace rps {
 
@@ -10,6 +11,9 @@ HandLandmarker::HandLandmarker(const std::string& model_path) {
 
     options_ = TfLiteInterpreterOptionsCreate();
     TfLiteInterpreterOptionsSetNumThreads(options_, 2);
+    TFLGpuDelegateOptions gpu_options = TFLGpuDelegateOptionsDefault();
+    TfLiteDelegate* metal_delegate = TFLGpuDelegateCreate(&gpu_options);
+    TfLiteInterpreterOptionsAddDelegate(options_, metal_delegate);
 
     interpreter_ = TfLiteInterpreterCreate(model_, options_);
     if (!interpreter_) throw std::runtime_error("Failed to create hand landmarker interpreter");
@@ -30,52 +34,50 @@ cv::Mat HandLandmarker::cropAndRotate(const cv::Mat& frame,
     float frame_w = static_cast<float>(frame.cols);
     float frame_h = static_cast<float>(frame.rows);
 
-    // Convert normalized palm center to pixel coords
     float cx = palm.cx * frame_w;
     float cy = palm.cy * frame_h;
 
-    // Crop size: take the larger dimension of the palm box, scaled up
+    // Square crop using longer side, scaled by 2.6
     float box_size = std::max(palm.width * frame_w, palm.height * frame_h) * CROP_SCALE;
-    float half     = box_size / 2.0f;
+    
+    // shift_y: -0.5 means shift center upward by half the box size
+    // This moves the crop center from palm to middle of full hand
+    float shift_y = -0.5f * box_size * 0.5f ;
+    float cos_r   = std::cos(palm.rotation);
+    float sin_r   = std::sin(palm.rotation);
 
-    // Build the transformation matrix:
-    // We want to rotate around the palm center and crop to a square.
-    // OpenCV's getRotationMatrix2D does: rotate around center, then translate.
-    // We then map that rotated square into a 224x224 output image.
+    // Apply shift in the rotated frame's Y direction
+    cx += -sin_r * shift_y;
+    cy +=  cos_r * shift_y;
 
-    // Step 1: rotate around palm center to align hand upright
-    float angle_deg = palm.rotation * 180.0f / static_cast<float>(M_PI);
-    cv::Mat rot = cv::getRotationMatrix2D(cv::Point2f(cx, cy), angle_deg, 1.0f);
+    double scale = static_cast<double>(INPUT_SIZE) / box_size;
+    double cos_t = std::cos(static_cast<double>(-palm.rotation)) * scale;
+    double sin_t = std::sin(static_cast<double>(-palm.rotation)) * scale;
 
-    // Step 2: after rotation, our crop square is centered at (cx, cy)
-    // with half-size = half. We want to map:
-    //   top-left (cx-half, cy-half) -> (0, 0)
-    //   bottom-right (cx+half, cy+half) -> (224, 224)
-    // Add translation to rot matrix to achieve this
-    rot.at<double>(0, 2) += (INPUT_SIZE / 2.0 - cx);
-    rot.at<double>(1, 2) += (INPUT_SIZE / 2.0 - cy);
+    double half = INPUT_SIZE / 2.0;
+    double tx = -cos_t * cx + sin_t * cy + half;
+    double ty = -sin_t * cx - cos_t * cy + half;
 
-    // Scale: the crop square of size box_size must fit into INPUT_SIZE pixels
-    double scale = INPUT_SIZE / box_size;
-    rot.at<double>(0, 0) *= scale; rot.at<double>(0, 1) *= scale; rot.at<double>(0, 2) *= scale;
-    rot.at<double>(1, 0) *= scale; rot.at<double>(1, 1) *= scale; rot.at<double>(1, 2) *= scale;
-    // Re-apply the non-scaled translation component
-    rot.at<double>(0, 2) += (1.0 - scale) * (INPUT_SIZE / 2.0);
-    rot.at<double>(1, 2) += (1.0 - scale) * (INPUT_SIZE / 2.0);
+    transform_matrix = cv::Mat(2, 3, CV_64F);
+    transform_matrix.at<double>(0, 0) =  cos_t;
+    transform_matrix.at<double>(0, 1) = -sin_t;
+    transform_matrix.at<double>(0, 2) =  tx;
+    transform_matrix.at<double>(1, 0) =  sin_t;
+    transform_matrix.at<double>(1, 1) =  cos_t;
+    transform_matrix.at<double>(1, 2) =  ty;
 
-    transform_matrix = rot.clone();
-
-    // Apply the transformation to produce a 224x224 cropped image
     cv::Mat cropped;
-    cv::warpAffine(frame, cropped, rot, cv::Size(INPUT_SIZE, INPUT_SIZE),
+    cv::warpAffine(frame, cropped, transform_matrix,
+                   cv::Size(INPUT_SIZE, INPUT_SIZE),
                    cv::INTER_LINEAR, cv::BORDER_REPLICATE);
 
-    // Convert BGR -> RGB, normalize [0,255] -> [0, 1]
     cv::Mat rgb;
     cv::cvtColor(cropped, rgb, cv::COLOR_BGR2RGB);
     cv::Mat out;
     rgb.convertTo(out, CV_32FC3, 1.0f / 255.0f);
-
+    cv::Mat display;
+cv::cvtColor(cropped, display, cv::COLOR_BGR2RGB);
+cv::imshow("Landmarker Input", display);
     return out;
 }
 
@@ -110,11 +112,11 @@ LandmarkResult HandLandmarker::detect(const cv::Mat& frame, const PalmDetection&
     cv::Mat input_mat = cropAndRotate(frame, palm, transform_matrix);
 
     // Copy into input tensor
+    std::cout << "rotation=" << palm.rotation 
+          << " (" << palm.rotation * 180.0f / M_PI << " deg)" << std::endl;
     TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter_, 0);
     const int num_elements = INPUT_SIZE * INPUT_SIZE * 3;
-    memcpy(TfLiteTensorData(input_tensor),
-           input_mat.ptr<float>(0),
-           num_elements * sizeof(float));
+    memcpy(TfLiteTensorData(input_tensor), input_mat.ptr<float>(0), num_elements * sizeof(float));
 
     // Run inference
     if (TfLiteInterpreterInvoke(interpreter_) != kTfLiteOk)
@@ -130,8 +132,8 @@ LandmarkResult HandLandmarker::detect(const cv::Mat& frame, const PalmDetection&
     const float* lm_data = reinterpret_cast<const float*>(TfLiteTensorData(lm_tensor));
     const float* pr_data = reinterpret_cast<const float*>(TfLiteTensorData(pr_tensor));
 
-    float presence = 1.0f / (1.0f + std::exp(-pr_data[0]));
-
+    float presence = pr_data[0];  // Already a sigmoid score in [0, 1]
+    //std::cout << "Hand presence score: " << presence << std::endl;
     if (presence < PRESENCE_THRESH) {
         return {{}, presence, false};
     }

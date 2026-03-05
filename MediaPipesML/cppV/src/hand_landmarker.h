@@ -40,7 +40,7 @@ private:
     TfLiteInterpreterOptions*     options_     = nullptr;
 
     static constexpr int   INPUT_SIZE     = 224;
-    static constexpr float PRESENCE_THRESH = 0.5f;
+    static constexpr float PRESENCE_THRESH = 0.2f;
     // Scale factor: how much larger than the detected palm to crop
     static constexpr float CROP_SCALE     = 2.6f;
 };
