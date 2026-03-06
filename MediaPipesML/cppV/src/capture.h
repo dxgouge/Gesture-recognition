@@ -19,8 +19,8 @@ namespace Capture {
 constexpr int    FRAME_WIDTH     = 640;
 constexpr int    FRAME_HEIGHT    = 480;
 constexpr int    PREDICT_EVERY_N = 1;
-constexpr double TARGET_FPS      = 30.0;
-constexpr int    FRAME_DELAY_MS  = static_cast<int>(1000.0 / TARGET_FPS);
+constexpr double TARGET_FPS      = 120.0;
+constexpr int    FRAME_DELAY_MS  = 1;
 
 const std::string WINDOW_NAME = "RPS Classifier";
 

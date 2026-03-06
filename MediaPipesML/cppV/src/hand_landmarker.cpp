@@ -1,7 +1,7 @@
 #include "hand_landmarker.h"
 #include <stdexcept>
 #include <cmath>
-#include "tensorflow/lite/delegates/gpu/metal_delegate.h"
+#include <chrono>
 
 namespace rps {
 
@@ -10,10 +10,9 @@ HandLandmarker::HandLandmarker(const std::string& model_path) {
     if (!model_) throw std::runtime_error("Failed to load hand landmark model: " + model_path);
 
     options_ = TfLiteInterpreterOptionsCreate();
-    TfLiteInterpreterOptionsSetNumThreads(options_, 2);
-    TFLGpuDelegateOptions gpu_options = TFLGpuDelegateOptionsDefault();
-    TfLiteDelegate* metal_delegate = TFLGpuDelegateCreate(&gpu_options);
-    TfLiteInterpreterOptionsAddDelegate(options_, metal_delegate);
+    TfLiteInterpreterOptionsSetNumThreads(options_, 4);
+    
+    
 
     interpreter_ = TfLiteInterpreterCreate(model_, options_);
     if (!interpreter_) throw std::runtime_error("Failed to create hand landmarker interpreter");
@@ -112,15 +111,20 @@ LandmarkResult HandLandmarker::detect(const cv::Mat& frame, const PalmDetection&
     cv::Mat input_mat = cropAndRotate(frame, palm, transform_matrix);
 
     // Copy into input tensor
-    std::cout << "rotation=" << palm.rotation 
-          << " (" << palm.rotation * 180.0f / M_PI << " deg)" << std::endl;
+    // std::cout << "rotation=" << palm.rotation 
+    //       << " (" << palm.rotation * 180.0f / M_PI << " deg)" << std::flush;
     TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter_, 0);
     const int num_elements = INPUT_SIZE * INPUT_SIZE * 3;
     memcpy(TfLiteTensorData(input_tensor), input_mat.ptr<float>(0), num_elements * sizeof(float));
 
     // Run inference
+    auto t0 = std::chrono::high_resolution_clock::now();
     if (TfLiteInterpreterInvoke(interpreter_) != kTfLiteOk)
         throw std::runtime_error("Hand landmark inference failed");
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "Hand: " 
+            << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count() / 1000.0 
+            << "ms" << std::endl;
 
     // Output tensors:
     // [0]: landmarks  [1, 63]  - 21 landmarks x (x, y, z)

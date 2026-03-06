@@ -123,7 +123,7 @@ void runLoop(
     cv::VideoCapture cap(0);
     if (!cap.isOpened())
         throw std::runtime_error("Could not open webcam");
-
+    cap.set(cv::CAP_PROP_FPS, 120);
     cap.set(cv::CAP_PROP_FRAME_WIDTH,  FRAME_WIDTH);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
     
@@ -136,7 +136,9 @@ void runLoop(
     int         frame_count        = 0;
     cv::Mat     frame;
 
+    cv::TickMeter timer;
     while (true) {
+        timer.start();
         cap >> frame;
         if (frame.empty()) break;
         cv::flip(frame, frame, 1);
@@ -207,6 +209,9 @@ void runLoop(
                     static_cast<int>(frame_buffer.size()), Inference::WINDOW_SIZE, landmarks, palms);
 
         cv::imshow(WINDOW_NAME, frame);
+        timer.stop();
+        double fps = timer.getFPS();
+        std::cout << "AVG FPS: " << fps << "\r" << std::flush;
 
         int key = cv::waitKey(FRAME_DELAY_MS) & 0xFF;
         if (key == 'q' || key == 27) break;

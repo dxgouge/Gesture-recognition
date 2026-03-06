@@ -34,7 +34,7 @@ endif()
 # TFLITE PATHS
 # =============================================================================
 set(TFLITE_ROOT  "$ENV{HOME}/tensorflow")
-set(TFLITE_BUILD "${TFLITE_ROOT}/tflite_build_gpu")
+set(TFLITE_BUILD "${TFLITE_ROOT}/tflite_build")
 set(DEPS         "${TFLITE_BUILD}/_deps")
 
 set(TFLITE_INCLUDE_DIRS
@@ -199,8 +199,7 @@ set(CPUINFO_LIBS
 
 find_library(ACCELERATE_FRAMEWORK Accelerate)
 find_library(FOUNDATION_FRAMEWORK  Foundation)
-find_library(METAL_FRAMEWORK Metal)
-find_library(COREGRAPHICS_FRAMEWORK CoreGraphics)
+
 
 # =============================================================================
 # EXECUTABLE
@@ -214,12 +213,15 @@ add_executable(rps_cpp
     src/hand_landmarker.cpp
 )
 
+
+
+
 target_include_directories(rps_cpp PRIVATE
     src
     ${OpenCV_INCLUDE_DIRS}
     ${LIGHTGBM_INCLUDE_DIR}
     ${TFLITE_INCLUDE_DIRS}
-    ${TFLITE_ROOT}/tensorflow/lite/delegates/gpu
+
 )
 
 target_link_directories(rps_cpp PRIVATE
@@ -242,7 +244,5 @@ target_link_libraries(rps_cpp PRIVATE
     ${CPUINFO_LIBS}
     ${ACCELERATE_FRAMEWORK}
     ${FOUNDATION_FRAMEWORK}
-    ${TFLITE_BUILD}/libLiteRtMetalAccelerator.dylib
-    ${METAL_FRAMEWORK}
-    ${COREGRAPHICS_FRAMEWORK}
+ 
 )

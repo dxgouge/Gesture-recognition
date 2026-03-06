@@ -3,8 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
-#include "tensorflow/lite/delegates/gpu/metal_delegate.h"
-
+#include <chrono>
 
 namespace rps {
 
@@ -66,10 +65,8 @@ PalmDetector::PalmDetector(const std::string& model_path) {
         throw std::runtime_error("Failed to load palm detection model: " + model_path);
 
     options_ = TfLiteInterpreterOptionsCreate();
-    TfLiteInterpreterOptionsSetNumThreads(options_, 2);
-    TFLGpuDelegateOptions gpu_options = TFLGpuDelegateOptionsDefault();
-    TfLiteDelegate* metal_delegate = TFLGpuDelegateCreate(&gpu_options);
-    TfLiteInterpreterOptionsAddDelegate(options_, metal_delegate);
+    TfLiteInterpreterOptionsSetNumThreads(options_, 4);
+    
 
     interpreter_ = TfLiteInterpreterCreate(model_, options_);
     if (!interpreter_)
@@ -78,24 +75,7 @@ PalmDetector::PalmDetector(const std::string& model_path) {
     if (TfLiteInterpreterAllocateTensors(interpreter_) != kTfLiteOk)
         throw std::runtime_error("Failed to allocate palm detector tensors");
 
-    // Debug: print actual output tensor shapes so we can verify layout
-    {
-        const TfLiteTensor* t0 = TfLiteInterpreterGetOutputTensor(interpreter_, 0);
-        const TfLiteTensor* t1 = TfLiteInterpreterGetOutputTensor(interpreter_, 1);
-        std::cout << "boxes tensor dims:  "
-                  << TfLiteTensorDim(t0, 0) << "x"
-                  << TfLiteTensorDim(t0, 1) << "x"
-                  << TfLiteTensorDim(t0, 2) << std::endl;
-        std::cout << "scores tensor dims: "
-                  << TfLiteTensorDim(t1, 0) << "x"
-                  << TfLiteTensorDim(t1, 1) << "x"
-                  << TfLiteTensorDim(t1, 2) << std::endl;
-
-        int box_last   = TfLiteTensorDim(t0, TfLiteTensorNumDims(t0) - 1);
-        int score_last = TfLiteTensorDim(t1, TfLiteTensorNumDims(t1) - 1);
-        std::cout << "boxes last dim:  " << box_last   << std::endl;
-        std::cout << "scores last dim: " << score_last << std::endl;
-    }
+    
 
     anchors_ = generateAnchors();
     std::cout << "PalmDetector: " << anchors_.size() << " anchors generated" << std::endl;
@@ -140,8 +120,13 @@ std::vector<PalmDetection> PalmDetector::detect(const cv::Mat& frame) {
            input_mat.ptr<float>(0),
            num_elements * sizeof(float));
 
+    auto t0 = std::chrono::high_resolution_clock::now();
     if (TfLiteInterpreterInvoke(interpreter_) != kTfLiteOk)
         throw std::runtime_error("Palm detector inference failed");
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "Palm: " 
+            << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count() / 1000.0 
+            << "ms" << std::endl;
 
     auto dets = parseOutput(frame.cols, frame.rows);
     return nms(dets, NMS_THRESH);
@@ -209,10 +194,10 @@ std::vector<PalmDetection> PalmDetector::parseOutput(int /*frame_w*/, int /*fram
 
     }
     // Print first 5 raw scores (before sigmoid) to see what the model is outputting
-    std::cout << "Raw scores[0..4]: ";
-    for (int i = 0; i < 5; ++i)
-        std::cout << scores[i] << " ";
-    std::cout << std::endl;
+    // std::cout << "Raw scores[0..4]: ";
+    // for (int i = 0; i < 5; ++i)
+    //     std::cout << scores[i] << " ";
+    // std::cout << std::flush;
 
     // Count how many pass threshold
     int count = 0;
@@ -220,7 +205,7 @@ std::vector<PalmDetection> PalmDetector::parseOutput(int /*frame_w*/, int /*fram
         float s = 1.0f / (1.0f + std::exp(-scores[i]));
         if (s > SCORE_THRESH) count++;
     }
-    std::cout << "Detections above threshold: " << count << std::endl;
+    //std::cout << "Detections above threshold: " << count << std::flush;
 
     return dets;
 }
