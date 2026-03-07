@@ -74,9 +74,7 @@ cv::Mat HandLandmarker::cropAndRotate(const cv::Mat& frame,
     cv::cvtColor(cropped, rgb, cv::COLOR_BGR2RGB);
     cv::Mat out;
     rgb.convertTo(out, CV_32FC3, 1.0f / 255.0f);
-    cv::Mat display;
-cv::cvtColor(cropped, display, cv::COLOR_BGR2RGB);
-cv::imshow("Landmarker Input", display);
+    
     return out;
 }
 

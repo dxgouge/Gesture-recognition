@@ -23,11 +23,19 @@ public:
 
     std::vector<PalmDetection> detect(const cv::Mat& frame);
 
+    
+
 private:
+
+    cv::Mat resized_;
+    cv::Mat padded_;
+    cv::Mat rgb_;
+    cv::Mat input_mat_;
+   
     float pad_x_ = 0.0f;   // normalized padding on each side (left/right)
     float pad_y_ = 0.0f;   // normalized padding on each side (top/bottom)
     float scale_ = 1.0f;   // scale factor used during letterbox resize
-    void preprocess(const cv::Mat& frame, cv::Mat& out);
+    void preprocess(const cv::Mat& frame);
     std::vector<PalmDetection> parseOutput(int frame_w, int frame_h);
     std::vector<PalmDetection> nms(std::vector<PalmDetection>& dets, float iou_thresh);
     static std::vector<Anchor> generateAnchors();

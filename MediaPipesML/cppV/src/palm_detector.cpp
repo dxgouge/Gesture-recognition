@@ -87,7 +87,8 @@ PalmDetector::~PalmDetector() {
     if (model_)       TfLiteModelDelete(model_);
 }
 
-void PalmDetector::preprocess(const cv::Mat& frame, cv::Mat& out) {
+void PalmDetector::preprocess(const cv::Mat& frame) {
+    
     int fw = frame.cols, fh = frame.rows;
     float scale = std::min((float)INPUT_SIZE / fw, (float)INPUT_SIZE / fh);
     int new_w = (int)(fw * scale);
@@ -100,24 +101,25 @@ void PalmDetector::preprocess(const cv::Mat& frame, cv::Mat& out) {
     pad_y_ = (float)pad_y / INPUT_SIZE;
     scale_ = scale;
 
-    cv::Mat resized;
-    cv::resize(frame, resized, cv::Size(new_w, new_h));
-    cv::Mat padded = cv::Mat::zeros(INPUT_SIZE, INPUT_SIZE, CV_8UC3);
-    resized.copyTo(padded(cv::Rect(pad_x, pad_y, new_w, new_h)));
 
-    cv::Mat rgb;
-    cv::cvtColor(padded, rgb, cv::COLOR_BGR2RGB);
-    rgb.convertTo(out, CV_32FC3, 1.0f / 255.0f);
+
+
+    cv::resize(frame, resized_, cv::Size(new_w, new_h));  // reuses resized_ buffer
+    padded_ = cv::Mat::zeros(INPUT_SIZE, INPUT_SIZE, CV_8UC3);  // still zeros each time but no alloc
+    resized_.copyTo(padded_(cv::Rect(pad_x, pad_y, new_w, new_h)));
+    cv::cvtColor(padded_, rgb_, cv::COLOR_BGR2RGB);
+    rgb_.convertTo(input_mat_, CV_32FC3, 1.0f / 255.0f);
+
 }
 
 std::vector<PalmDetection> PalmDetector::detect(const cv::Mat& frame) {
-    cv::Mat input_mat;
-    preprocess(frame, input_mat);
+   
+    preprocess(frame);
 
     TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter_, 0);
     const int num_elements = INPUT_SIZE * INPUT_SIZE * 3;
     memcpy(TfLiteTensorData(input_tensor),
-           input_mat.ptr<float>(0),
+           input_mat_.ptr<float>(0),
            num_elements * sizeof(float));
 
     auto t0 = std::chrono::high_resolution_clock::now();

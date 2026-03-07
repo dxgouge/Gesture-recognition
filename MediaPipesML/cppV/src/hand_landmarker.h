@@ -26,6 +26,7 @@ public:
     LandmarkResult detect(const cv::Mat& frame, const PalmDetection& palm);
 
 private:
+
     // Crop and rotate the frame around the detected palm, resize to 224x224
     cv::Mat cropAndRotate(const cv::Mat& frame, const PalmDetection& palm,
                           cv::Mat& transform_matrix);
