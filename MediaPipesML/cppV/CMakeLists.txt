@@ -209,6 +209,7 @@ add_executable(rps_cpp
     src/features.cpp
     src/inference.cpp
     src/capture.cpp
+    src/collect.cpp
     src/palm_detector.cpp
     src/hand_landmarker.cpp
 )

@@ -1,16 +1,12 @@
 #include "features.h"
-// ^^ Include our own header first — brings in all our type definitions
 
-#include <cmath>      // sqrt, pow, atan2, acos, degrees conversions
-#include <numeric>    // std::accumulate — like Python's sum()
-#include <stdexcept>  // std::runtime_error — like Python's RuntimeError
-#include <algorithm>  // std::min, std::max
+#include <cmath>      
+#include <numeric>   
+#include <stdexcept>  
+#include <algorithm>  
 
 // =============================================================================
 // CONSTANTS
-// 'constexpr' means the value is computed at compile time — more efficient
-// than a regular variable. 'const' in Python is just a convention, in C++
-// constexpr is enforced by the compiler.
 // =============================================================================
 namespace {
     constexpr double REFERENCE_PALM_SIZE = 0.14;
@@ -38,11 +34,9 @@ double getLandmarkDistance(
     const std::vector<double>& x_coords,
     const std::vector<double>& y_coords)
 {
-    // Same as Python: sqrt((x1-x2)^2 + (y1-y2)^2)
     double dx = x_coords[landmark1] - x_coords[landmark2];
     double dy = y_coords[landmark1] - y_coords[landmark2];
     return std::sqrt(dx * dx + dy * dy);
-    // Note: std::sqrt is from <cmath> — in Python you'd use math.sqrt()
 }
 
 // -----------------------------------------------------------------------------
@@ -73,7 +67,7 @@ double getAngleBetweenFingers(
     if (norms == 0.0) return 0.0;
 
     // std::clamp keeps the value between -1 and 1 to avoid NaN from acos
-    // In Python you'd use numpy.clip()
+    
     double cosAngle = std::clamp(dot / norms, -1.0, 1.0);
     return toDegrees(std::acos(cosAngle));
 }
@@ -96,10 +90,8 @@ double getDistancesAggregated(
 {
     // Compute mean pairwise distance across all 21 landmarks
     // This replicates scipy.spatial.distance.pdist(...).mean()
-    // In Python scipy handles the nested loop for you — here we do it manually
     int n = static_cast<int>(x_coords.size());
-    // 'static_cast<int>' is C++'s explicit type conversion — Python does this
-    // automatically but C++ requires you to be explicit to avoid bugs
+    // 'static_cast<int>' is C++'s explicit type conversion 
 
     double sum   = 0.0;
     int    count = 0;
@@ -110,7 +102,6 @@ double getDistancesAggregated(
             double dy = y_coords[i] - y_coords[j];
             sum += std::sqrt(dx * dx + dy * dy);
             ++count;
-            // '++count' is the same as 'count += 1' in Python
             // Pre-increment (++count) is preferred in C++ over post-increment
             // (count++) for non-trivial types as it can be slightly more efficient
         }
@@ -118,7 +109,7 @@ double getDistancesAggregated(
 
     return (count > 0) ? (sum / count) * scale : 0.0;
     // Ternary operator: condition ? value_if_true : value_if_false
-    // Same as Python's: (sum / count) * scale if count > 0 else 0.0
+    
 }
 
 // -----------------------------------------------------------------------------
@@ -128,7 +119,7 @@ bool computeFeatures(
 {
     const auto& x = landmarks.x_coords;
     const auto& y = landmarks.y_coords;
-    // 'auto' lets the compiler infer the type — like Python's dynamic typing
+    // 'auto' lets the compiler infer the type 
     // but still checked at compile time. Here it infers const std::vector<double>&
 
     // Guard — bad frame, skip it
@@ -138,7 +129,7 @@ bool computeFeatures(
     double scale = REFERENCE_PALM_SIZE / palm_size;
 
     // Compute all direction vectors
-    // Mirrors _process_result() in your Python recognizer exactly
+    
     Vectors v;
     v.dirV_index       = getFingerVector(7,  6,  x, y);
     v.dirV_middle      = getFingerVector(11, 10, x, y);
@@ -149,7 +140,7 @@ bool computeFeatures(
     v.dirV_ring_base   = getFingerVector(14, 13, x, y);
 
     // Normalize vectors to unit length — removes magnitude, keeps direction
-    // Lambda function — C++ equivalent of a Python lambda
+   
     // [](Vec2& vec) { ... } captures nothing, takes a Vec2 by reference
     auto normalize = [](Vec2& vec) {
         double mag = std::sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
@@ -186,7 +177,6 @@ bool computeFeatures(
     d.dis_pinky_tip_to_base  = getLandmarkDistance(20, 0, x, y) * scale;
 
     // Fill output struct
-    // In Python you'd return a dict — here we fill the reference parameter
     out_features.palm_size             = palm_size;
     out_features.scale_factor          = scale;
     out_features.angles                = a;

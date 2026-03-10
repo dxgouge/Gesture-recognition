@@ -77,7 +77,7 @@ void drawOverlay(
         float sin_r = std::sin(palm.rotation);
         float half  = std::max(palm.width * FRAME_WIDTH,
                                palm.height * FRAME_HEIGHT) * 2.6f * 0.5f;
-        float shift_y = -0.5f * half;
+        float shift_y = -0.2f * half * 2.0f; // shift by full box size to move from palm center to hand center
         float rcx = cx + (-sin_r * shift_y);
         float rcy = cy + ( cos_r * shift_y);
 
@@ -151,7 +151,7 @@ static void inferenceThread(
                         frame_buffer.pop_front();
 
                     if (static_cast<int>(frame_buffer.size()) == Inference::WINDOW_SIZE
-                        && frame_count % 2 == 0)
+                        && frame_count % 1 == 0)
                     {
                         std::vector<double> window;
                         window.reserve(Inference::WINDOW_SIZE * flat.size());
@@ -204,7 +204,7 @@ void runLoop(
     cv::VideoCapture cap(0);
     if (!cap.isOpened())
         throw std::runtime_error("Could not open webcam");
-    cap.set(cv::CAP_PROP_FPS, 120);
+    cap.set(cv::CAP_PROP_FPS, 30);
     cap.set(cv::CAP_PROP_FRAME_WIDTH,  FRAME_WIDTH);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 

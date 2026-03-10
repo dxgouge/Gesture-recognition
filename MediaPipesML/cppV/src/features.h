@@ -1,23 +1,18 @@
 #pragma once
-// ^^ This is a "header guard" — it tells the compiler to only include this file
-//    once even if multiple files reference it. Python has no equivalent since
-//    imports are handled automatically.
 
-#include <vector>   // std::vector — like Python list
-#include <array>    // std::array  — fixed size list
-#include <string>   // std::string — like Python str
+
+#include <vector>   
+#include <array>    
+#include <string>   
 
 // =============================================================================
 // NAMESPACE
-// In Python you'd put these in a class or module. In C++ we use a namespace
-// to group related functions together without making a full class.
 // Usage: Features::getLandmarkDistance(...)
 // =============================================================================
 namespace Features {
 
 // =============================================================================
 // DATA STRUCTURES
-// Like Python dataclasses — groups related data together.
 // 'struct' members are public by default (unlike 'class').
 // =============================================================================
 
@@ -75,15 +70,8 @@ struct FrameFeatures {
 
 // =============================================================================
 // FUNCTION DECLARATIONS
-// In Python you just define functions. In C++ the header declares them
-// (says they exist and what types they take/return), and the .cpp defines them
-// (says what they actually do). The compiler needs to see the declaration
-// before it can compile any code that calls the function.
 // =============================================================================
 
-// Calculate Euclidean distance between two landmarks
-// 'const' means the function promises not to modify these parameters
-// '&' means pass by reference (no copy) — more efficient than Python's default
 double getLandmarkDistance(
     int landmark1,
     int landmark2,
@@ -120,10 +108,6 @@ double getDistancesAggregated(
     double scale
 );
 
-// Master function — takes raw landmarks, returns a fully computed FrameFeatures
-// Returns false if palm_size is 0 (bad frame), true on success
-// 'out_features' is an output parameter — the function fills it in
-// In Python you'd just return a dict; in C++ we pass in a reference to fill
 bool computeFeatures(
     const LandmarkData& landmarks,
     FrameFeatures& out_features

@@ -4,8 +4,7 @@
 #include <vector>
 #include <array>
 
-// LightGBM C API header
-// This is the raw C interface to LightGBM — no Python, no joblib
+
 #include <LightGBM/c_api.h>
 
 namespace Inference {
@@ -37,15 +36,6 @@ struct PredictionResult {
 
 // =============================================================================
 // CLASSIFIER CLASS
-// Unlike the feature module which uses free functions, inference is stateful —
-// it needs to hold the loaded model in memory between calls.
-// A class is the natural fit here.
-//
-// Key C++ concept: RAII (Resource Acquisition Is Initialization)
-// The model is loaded in the constructor and freed in the destructor.
-// This guarantees no memory leaks — the cleanup always happens automatically
-// when the object goes out of scope, even if an error occurs.
-// Python's garbage collector handles this for you automatically.
 // =============================================================================
 
 class RockPaperScissorsClassifier {
