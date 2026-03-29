@@ -1,6 +1,6 @@
 # rps-gesture-recognition
 
-Real-time Rock-Paper-Scissors gesture recognition built from scratch in C++. The system captures webcam video, detects hands, extracts skeletal landmarks, and classifies gestures — all running natively without Python or MediaPipe at runtime.
+Real-time Rock-Paper-Scissors gesture recognition built from scratch in C++ and Python. The system captures webcam video, detects hands, extracts skeletal landmarks, and classifies gestures — all running natively without Python or MediaPipe at runtime.
 
 > **Built as a learning project** to go deep on C++, low-level ML inference, and computer vision — replacing a working Python/MediaPipe prototype with a fully native implementation piece by piece.
 
