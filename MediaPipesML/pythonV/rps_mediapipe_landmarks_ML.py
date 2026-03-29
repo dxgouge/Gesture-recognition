@@ -102,6 +102,18 @@ class HandGestureRecognizer:
             terminal_coords[0] - initial_coords[0], 
             terminal_coords[1] - initial_coords[1]
         ])
+    def _get_finger_dir_vector(self, landmark1: int, landmark2: int, x_coords: List[float], y_coords: List[float]) -> np.ndarray:
+        """Calculate vector between two landmarks."""
+        initial_coords = [x_coords[landmark1], y_coords[landmark1]]
+        terminal_coords = [x_coords[landmark2], y_coords[landmark2]]
+        x = terminal_coords[0] - initial_coords[0]
+        y = terminal_coords[1] - initial_coords[1]
+        mag = np.sqrt(x**2 + y**2)
+        return np.array([
+            x / mag if mag > 0 else 0, 
+            y / mag if mag > 0 else 0
+            
+        ])
     
     def _get_finger_angle(self, vector: np.ndarray, reference_vector: np.ndarray) -> float:
         """Calculate angle of a vector relative to a reference vector in degrees."""
@@ -192,13 +204,13 @@ class HandGestureRecognizer:
                         
                         # Calculate direction vectors based on landmarks. From lower joint to middle joint.
                         vectors = {
-                            'dirV_index': self._get_finger_vector(7, 6, x_coords, y_coords),
-                            'dirV_middle': self._get_finger_vector(11, 10, x_coords, y_coords),
-                            'dirV_ring': self._get_finger_vector(15, 14, x_coords, y_coords),
-                            'dirV_pinky': self._get_finger_vector(19, 18, x_coords, y_coords),
-                            'dirV_baseline1': self._get_finger_vector(1, 0, x_coords, y_coords),
-                            'dirV_middle_base': self._get_finger_vector(10, 9, x_coords, y_coords),
-                            'dirV_ring_base': self._get_finger_vector(14, 13, x_coords, y_coords)
+                            'dirV_index': self._get_finger_dir_vector(7, 6, x_coords, y_coords),
+                            'dirV_middle': self._get_finger_dir_vector(11, 10, x_coords, y_coords),
+                            'dirV_ring': self._get_finger_dir_vector(15, 14, x_coords, y_coords),
+                            'dirV_pinky': self._get_finger_dir_vector(19, 18, x_coords, y_coords),
+                            'dirV_baseline1': self._get_finger_dir_vector(1, 0, x_coords, y_coords),
+                            'dirV_middle_base': self._get_finger_dir_vector(10, 9, x_coords, y_coords),
+                            'dirV_ring_base': self._get_finger_dir_vector(14, 13, x_coords, y_coords)
                         }
                         
                         # Calculate angles
@@ -345,7 +357,7 @@ class HandGestureRecognizer:
                 
                 # Print detection info every 30 frames
                 frame_count += 1
-                if frame_count % 30 == 0 and self.latest_result is not None:
+                if frame_count % 5 == 0 and self.latest_result is not None:
                     if self.latest_result.hand_landmarks:
                         print(f"Detected {len(self.latest_result.hand_landmarks)} hand(s)", end="\r", flush=True)
                     else:

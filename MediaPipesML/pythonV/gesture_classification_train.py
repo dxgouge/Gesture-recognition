@@ -34,17 +34,20 @@ from sklearn.metrics import (
 # CONFIGURATION — Edit these to match your setup
 # =============================================================================
 
-DATA_DIR  = "./data"   # Folder containing your CSV files
+DATA_DIR  = "./cppV/data/"   # Folder containing your CSV files
 
 # Map each class label to its CSV filename (just the filename, not full path)
 FILE_MAP = {
-    0: "custom_gesture_data_rock.csv",
-    1: "custom_gesture_data_paper.csv",
-    2: "custom_gesture_data_scissors.csv",
+    0: "rock_data.csv",
+    1: "paper_data.csv",
+    2: "scissors_data.csv",
 }
+# 0: "custom_gesture_data_rock.csv",
+#     1: "custom_gesture_data_paper.csv",
+#     2: "custom_gesture_data_scissors.csv",
 
 LABEL_COLUMN  = "gesture_type"   # Column name for the label in your CSVs
-WINDOW_SIZE   = 5             # Sliding window in frames (~0.5s at 30fps)
+WINDOW_SIZE   = 5           # Sliding window in frames (~0.5s at 30fps)
 TEST_SIZE     = 0.2               # 20% of each file held out for testing
 MODEL_OUT     = "rps_lgbm_model.pkl"
 

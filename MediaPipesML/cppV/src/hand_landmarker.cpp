@@ -39,7 +39,7 @@ cv::Mat HandLandmarker::cropAndRotate(const cv::Mat& frame,
     // Square crop using longer side, scaled by 2.6
     float box_size = std::max(palm.width * frame_w, palm.height * frame_h) * CROP_SCALE;
     
-    // shift_y: -0.5 means shift center upward by half the box size
+    // shift_y: -0.2 means shift center upward by half the box size
     // This moves the crop center from palm to middle of full hand
     float shift_y = -0.2f * box_size ;
     float cos_r   = std::cos(palm.rotation);

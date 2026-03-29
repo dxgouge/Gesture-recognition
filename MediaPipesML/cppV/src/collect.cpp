@@ -12,8 +12,6 @@ namespace Collect {
 
 // =============================================================================
 // CSV HEADER
-// Column order matches gesture_data_collection.py exactly so that old Python
-// CSVs and new C++ CSVs are interchangeable in the training script.
 // The training script drops:
 //   - timestamp, gesture_type          (DROP_COLUMNS)
 //   - landmark_*                       (startswith "landmark")

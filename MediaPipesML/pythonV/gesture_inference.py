@@ -94,7 +94,7 @@ def extract_feature_vector(data: dict) -> np.ndarray:
         data['vectors']['dirV_middle'][0],   data['vectors']['dirV_middle'][1],
         data['vectors']['dirV_ring'][0],     data['vectors']['dirV_ring'][1],
         data['vectors']['dirV_pinky'][0],    data['vectors']['dirV_pinky'][1],
-        data['vectors']['dirV_baseline1'][1],  # data['vectors']['dirV_baseline1'][0],
+        #data['vectors']['dirV_baseline1'][1],  # data['vectors']['dirV_baseline1'][0],
         data['vectors']['dirV_middle_base'][0], data['vectors']['dirV_middle_base'][1],
         data['vectors']['dirV_ring_base'][0],   data['vectors']['dirV_ring_base'][1],
     ]
@@ -155,6 +155,10 @@ def run_inference():
         recognizer.initialize()
         print(f"Running inference every {PREDICT_EVERY_N_FRAMES} frame(s). Press 'q' to quit.")
 
+
+        fps_start = time.time()
+        fps_count = 0
+
         while recognizer.running:
             ret, frame = recognizer.cap.read()
             if not ret:
@@ -206,12 +210,18 @@ def run_inference():
             display = draw_overlay(display, current_gesture, current_confidence, len(frame_buffer))
             cv2.imshow("RPS Inference", display)
 
-            # Quit on 'q' or ESC
+            fps_count += 1
+            if fps_count % 5 == 0:
+                elapsed = time.time() - fps_start
+                print(f"FPS: {fps_count / elapsed:.1f}")
+                fps_count = 0
+                fps_start = time.time()
+                        # Quit on 'q' or ESC
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q') or key == 27:
                 break
 
-            time.sleep(0.033)  # ~30 fps
+            #time.sleep(0.033)  # ~30 fps
 
     except KeyboardInterrupt:
         print("\nStopped by user.")
