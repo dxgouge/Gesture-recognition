@@ -4,7 +4,7 @@ Real-time Rock-Paper-Scissors gesture recognition built from scratch in C++ and 
 
 > **Built as a learning project** to go deep on C++, low-level ML inference, and computer vision — replacing a working Python/MediaPipe prototype with a fully native implementation piece by piece.
 
-
+Main CPP code exists here: Gesture-recognition\MediaPipesML\cppV
 
 ## How It Works
 
